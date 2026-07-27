@@ -1,0 +1,107 @@
+.panel {
+  padding: 18px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.panel-head {
+  margin-bottom: 14px;
+}
+.panel-head h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  color: var(--warning);
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.alert {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  padding: 14px 14px 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-2);
+  border: 1px solid var(--border-color);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.alert:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex-shrink: 0;
+}
+.alert.critique .dot { background: var(--danger); box-shadow: 0 0 0 4px var(--danger-soft); }
+.alert.eleve .dot { background: var(--warning); box-shadow: 0 0 0 4px var(--warning-soft); }
+.alert.moyen .dot { background: var(--info); box-shadow: 0 0 0 4px var(--info-soft); }
+.alert.faible .dot { background: var(--success); box-shadow: 0 0 0 4px var(--success-soft); }
+.body {
+  flex: 1;
+  min-width: 0;
+}
+.a-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.a-title {
+  font-weight: 600;
+  color: var(--text-strong);
+  font-size: 13.5px;
+}
+.sev {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.a-desc {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+.ack {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  color: var(--text-base);
+  font-size: 12.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all var(--dur-base);
+}
+.ack:hover:not(:disabled) {
+  border-color: var(--primary-400);
+  color: var(--primary-600);
+}
+.ack:disabled {
+  color: var(--success);
+  border-color: transparent;
+  background: var(--success-soft);
+  cursor: default;
+}
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 30px;
+  color: var(--text-muted);
+}

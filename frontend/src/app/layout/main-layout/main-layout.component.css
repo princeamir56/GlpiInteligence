@@ -1,0 +1,26 @@
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.content-inner {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 32px;
+}
+@media (max-width: 640px) {
+  .content-inner {
+    padding: 20px 16px;
+  }
+}

@@ -1,0 +1,31 @@
+<app-tab-scaffold
+  title="Demandeurs"
+  subtitle="Analyse des demandeurs les plus actifs"
+  [error]="error()"
+  (retry)="load()"
+>
+  <div class="charts two">
+    <div class="chart-card card">
+      <h3>Top 15 demandeurs</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-bar-chart *ngIf="!loading()" [data]="topChart()"></app-bar-chart>
+      </div>
+    </div>
+    <div class="chart-card card">
+      <h3>Incidents vs Demandes</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-bar-chart *ngIf="!loading()" [data]="stackedChart()"></app-bar-chart>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    title="Détail des demandeurs"
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    exportName="demandeurs"
+  ></app-data-table>
+</app-tab-scaffold>

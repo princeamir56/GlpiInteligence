@@ -1,0 +1,46 @@
+# Recommendation rules for the DSI — human-editable.
+# Each rule maps to logic in ml_engine/recommender.py. Thresholds here are the
+# only knobs you should need to tune; edit and re-run the inference DAG.
+
+expires_days: 14          # how long a generated recommendation stays valid
+
+rules:
+  # 3.4 — Training recommendation
+  # A "critique" user whose incidents concentrate on <=2 categories (>80%)
+  # benefits from targeted training on those categories.
+  formation:
+    enabled: true
+    type: FORMATION
+    severity: ÉLEVÉ
+    profile: critique
+    incident_concentration_pct: 80     # % of incidents on the top-2 categories
+    max_categories: 2
+
+  # 3.4 — Team overload alert
+  # Predicted 72h volume above 1.5x the category average AND the responsible
+  # team's current SLA below 90% -> SURCHARGE.
+  surcharge:
+    enabled: true
+    type: SURCHARGE
+    severity: CRITIQUE
+    volume_multiplier: 1.5
+    sla_threshold_pct: 90.0
+
+  # 3.4 — Root cause escalation
+  # A DBSCAN cluster with >=100 tickets in the last 30 days -> CAUSE_RACINE.
+  cause_racine:
+    enabled: true
+    type: CAUSE_RACINE
+    severity: CRITIQUE
+    algorithm: dbscan
+    min_tickets: 100
+    window_days: 30
+
+  # 3.4 — Repetitive requester
+  # A user with >30 repetitive tickets on the same normalized title -> automate
+  # / fix the process rather than train the person.
+  automatisation:
+    enabled: true
+    type: AUTOMATISATION
+    severity: MODÉRÉ
+    min_repetitive: 30

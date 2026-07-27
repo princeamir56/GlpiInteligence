@@ -1,0 +1,53 @@
+<app-tab-scaffold
+  title="Répétitifs"
+  subtitle="Tickets récurrents et causes racines détectées par le clustering ML"
+  [error]="error()"
+  (retry)="load()"
+>
+  <div class="charts">
+    <div class="chart-card card">
+      <h3>Top clusters récurrents</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-bar-chart *ngIf="!loading()" [data]="barChart()"></app-bar-chart>
+      </div>
+    </div>
+  </div>
+
+  <!-- Root causes panel -->
+  <div class="root-causes">
+    <h3 class="rc-title"><lucide-icon name="repeat" [size]="17"></lucide-icon> Causes racines</h3>
+
+    <div class="rc-grid" *ngIf="loading()">
+      <app-skeleton-loader variant="card" [count]="6" height="150px"></app-skeleton-loader>
+    </div>
+
+    <div class="rc-grid" *ngIf="!loading()" appStagger>
+      <div class="rc-card card" *ngFor="let c of topClusters()">
+        <div class="rc-head">
+          <span class="rc-name">{{ c.title }}</span>
+          <span class="rc-count mono">{{ c.count }}</span>
+        </div>
+        <div class="rc-keywords" *ngIf="keywords(c).length">
+          <span class="kw" *ngFor="let k of keywords(c)">{{ k }}</span>
+        </div>
+        <ul class="rc-samples" *ngIf="samples(c).length">
+          <li *ngFor="let s of samples(c)">{{ s }}</li>
+        </ul>
+      </div>
+
+      <div class="rc-empty" *ngIf="topClusters().length === 0">
+        <lucide-icon name="inbox" [size]="24"></lucide-icon>
+        <span>Aucun cluster récurrent détecté</span>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    title="Tous les clusters"
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    exportName="repetitifs"
+  ></app-data-table>
+</app-tab-scaffold>

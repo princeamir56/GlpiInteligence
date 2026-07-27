@@ -1,0 +1,13 @@
+<button
+  type="button"
+  class="theme-toggle"
+  [class.dark]="resolved() === 'dark'"
+  (click)="toggle()"
+  [attr.aria-label]="resolved() === 'dark' ? 'Activer le thème clair' : 'Activer le thème sombre'"
+>
+  <span class="track">
+    <span class="thumb">
+      <lucide-icon [name]="resolved() === 'dark' ? 'moon' : 'sun'" [size]="13"></lucide-icon>
+    </span>
+  </span>
+</button>

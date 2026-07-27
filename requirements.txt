@@ -1,0 +1,51 @@
+# Layer 1 — GLPI connector
+requests>=2.31
+python-dotenv>=1.0
+
+# Layer 2 — ETL & ingestion
+pandas>=2.1
+numpy>=1.26
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+redis>=5.0
+celery>=5.3
+apache-airflow>=2.9
+apache-airflow-providers-postgres>=5.10
+
+# Layer 3 — ML engine
+scikit-learn>=1.4
+xgboost>=2.0
+prophet>=1.1
+# mlflow pinned to 2.x: it supports SQLAlchemy 1.4 (Airflow 2.9.3's version) so
+# both can live in one image. mlflow 3.x requires SQLAlchemy 2.0 and would break
+# Airflow 2.9. A DB-backed store (SQLite) is required for the model registry.
+mlflow>=2.12,<3
+pyyaml>=6.0
+# NLP (French). torch pinned to CPU wheels in the Dockerfile / install docs.
+spacy>=3.7
+sentence-transformers>=2.7
+transformers>=4.40
+torch>=2.2
+# spaCy French model (install separately, it's not on PyPI as a dep):
+#   python -m spacy download fr_core_news_sm
+
+# Layer 4 — API backend (FastAPI)
+fastapi>=0.111
+uvicorn[standard]>=0.30
+gunicorn>=22.0
+# Async SQLAlchemy + Postgres driver (the API reads the warehouse async).
+asyncpg>=0.29
+# redis>=5.0 already declared in layer 2 (provides redis.asyncio).
+pydantic>=2.7
+pydantic-settings>=2.2
+python-jose[cryptography]>=3.3
+passlib[bcrypt]>=1.7
+slowapi>=0.1.9
+prometheus-fastapi-instrumentator>=7.0
+
+# Tests
+pytest>=8.0
+requests-mock>=1.11
+fakeredis>=2.21
+pytest-asyncio>=0.23
+httpx>=0.27

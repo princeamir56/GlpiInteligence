@@ -1,0 +1,6 @@
+<div class="sla" [attr.title]="pct() + '% SLA'">
+  <div class="track">
+    <div class="fill" [class]="tone()" [style.width.%]="pct()"></div>
+  </div>
+  <span class="label mono" *ngIf="showLabel">{{ pct() | number: '1.0-0' }}%</span>
+</div>

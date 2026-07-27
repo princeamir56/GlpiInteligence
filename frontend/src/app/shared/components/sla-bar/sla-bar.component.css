@@ -1,0 +1,28 @@
+.sla {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 120px;
+}
+.track {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--bg-surface-2);
+  overflow: hidden;
+}
+.fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 600ms var(--ease-out);
+}
+.fill.good { background: var(--success); }
+.fill.warn { background: var(--warning); }
+.fill.bad { background: var(--danger); }
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-base);
+  min-width: 34px;
+  text-align: right;
+}

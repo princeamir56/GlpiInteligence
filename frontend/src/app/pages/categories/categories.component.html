@@ -1,0 +1,31 @@
+<app-tab-scaffold
+  title="Catégories"
+  subtitle="Distribution des tickets par catégorie"
+  [error]="error()"
+  (retry)="load()"
+>
+  <div class="charts two">
+    <div class="chart-card card">
+      <h3>Répartition par catégorie</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-donut-chart *ngIf="!loading()" [data]="donutChart()" centerLabel="Tickets"></app-donut-chart>
+      </div>
+    </div>
+    <div class="chart-card card">
+      <h3>Incidents vs Demandes</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-bar-chart *ngIf="!loading()" [data]="stackedChart()"></app-bar-chart>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    title="Détail des catégories"
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    exportName="categories"
+  ></app-data-table>
+</app-tab-scaffold>

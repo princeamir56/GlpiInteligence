@@ -1,0 +1,76 @@
+<section class="page">
+  <div class="page-head">
+    <div>
+      <h1>Vue d'ensemble</h1>
+      <p>Indicateurs clés et signaux ML du support IT</p>
+    </div>
+  </div>
+
+  <!-- Error state -->
+  <div class="state card" *ngIf="error()">
+    <lucide-icon name="alert-triangle" [size]="30"></lucide-icon>
+    <h3>Impossible de charger les données</h3>
+    <p>Vérifiez que le backend est démarré sur localhost:8000.</p>
+    <button class="btn btn-primary" (click)="load()">Réessayer</button>
+  </div>
+
+  <ng-container *ngIf="!error()">
+    <!-- KPI grid -->
+    <div class="kpi-grid" *ngIf="loading()">
+      <app-skeleton-loader variant="kpi" [count]="6"></app-skeleton-loader>
+    </div>
+
+    <div class="kpi-grid" *ngIf="!loading()" appStagger>
+      <app-kpi-card
+        *ngFor="let k of kpis()"
+        [label]="k.label"
+        [value]="k.value"
+        [unit]="k.unit || meta(k).unit || ''"
+        [decimals]="meta(k).decimals || 0"
+        [icon]="meta(k).icon"
+        [delta]="k.delta"
+        [trend]="k.trend"
+        [upIsGood]="meta(k).upIsGood"
+      ></app-kpi-card>
+    </div>
+
+    <!-- Charts + alerts -->
+    <div class="grid">
+      <div class="chart-card card">
+        <h3>Top sites</h3>
+        <div class="chart-body">
+          <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+          <app-bar-chart *ngIf="!loading()" [data]="data()?.charts?.top_sites || null"></app-bar-chart>
+        </div>
+      </div>
+
+      <div class="chart-card card">
+        <h3>Top catégories</h3>
+        <div class="chart-body">
+          <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+          <app-donut-chart *ngIf="!loading()" [data]="data()?.charts?.top_categories || null" centerLabel="Tickets"></app-donut-chart>
+        </div>
+      </div>
+
+      <div class="chart-card card">
+        <h3>Top demandeurs</h3>
+        <div class="chart-body">
+          <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+          <app-horiz-bar-chart *ngIf="!loading()" [data]="data()?.charts?.top_requesters || null"></app-horiz-bar-chart>
+        </div>
+      </div>
+
+      <div class="chart-card card">
+        <h3>SLA par technicien</h3>
+        <div class="chart-body">
+          <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+          <app-bar-chart *ngIf="!loading()" [data]="data()?.charts?.sla_per_technician || null"></app-bar-chart>
+        </div>
+      </div>
+    </div>
+
+    <div class="alerts-row">
+      <app-alerts-panel [alerts]="alerts()" [loading]="loading()" (acknowledge)="ack($event)"></app-alerts-panel>
+    </div>
+  </ng-container>
+</section>

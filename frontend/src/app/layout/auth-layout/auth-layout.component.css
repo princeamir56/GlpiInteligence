@@ -1,0 +1,23 @@
+.auth-shell {
+  position: relative;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+.aurora {
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 40% at 20% 25%, rgba(91, 105, 188, 0.28), transparent 60%),
+    radial-gradient(45% 45% at 82% 75%, rgba(39, 49, 110, 0.32), transparent 60%);
+  filter: blur(20px);
+  animation: drift 18s var(--ease-in-out) infinite alternate;
+  pointer-events: none;
+}
+@keyframes drift {
+  from { transform: translate3d(-2%, -2%, 0) scale(1); }
+  to { transform: translate3d(3%, 2%, 0) scale(1.08); }
+}

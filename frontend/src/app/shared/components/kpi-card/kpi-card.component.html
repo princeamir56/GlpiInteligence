@@ -1,0 +1,14 @@
+<div class="kpi card">
+  <div class="top">
+    <span class="icon"><lucide-icon [name]="icon" [size]="18"></lucide-icon></span>
+    <span class="delta" [class]="trendTone" *ngIf="delta != null">
+      <lucide-icon [name]="trendIcon" [size]="13"></lucide-icon>
+      {{ delta > 0 ? '+' : '' }}{{ delta }}%
+    </span>
+  </div>
+
+  <div class="value mono">
+    <span [countUp]="value" [decimals]="decimals" [suffix]="unit">0{{ unit }}</span>
+  </div>
+  <div class="label">{{ label }}</div>
+</div>

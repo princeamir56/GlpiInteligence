@@ -1,0 +1,12 @@
+<div
+  *ngFor="let i of items"
+  class="sk"
+  [class.sk-text]="variant === 'text'"
+  [class.sk-card]="variant === 'card'"
+  [class.sk-kpi]="variant === 'kpi'"
+  [class.sk-chart]="variant === 'chart'"
+  [class.sk-row]="variant === 'table-row'"
+  [class.sk-circle]="variant === 'circle'"
+  [style.width]="width"
+  [style.height]="height || null"
+></div>

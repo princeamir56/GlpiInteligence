@@ -1,0 +1,99 @@
+<div class="table-card card">
+  <!-- Toolbar -->
+  <div class="toolbar" *ngIf="title || searchable || exportable">
+    <h3 class="t-title" *ngIf="title">{{ title }}</h3>
+    <div class="tools">
+      <div class="search" *ngIf="searchable">
+        <lucide-icon name="search" [size]="15"></lucide-icon>
+        <input
+          type="text"
+          placeholder="Rechercher…"
+          [ngModel]="search()"
+          (ngModelChange)="search.set($event); page.set(1)"
+          aria-label="Rechercher dans le tableau"
+        />
+      </div>
+      <button type="button" class="btn btn-ghost" *ngIf="exportable" (click)="exportCsv()">
+        <lucide-icon name="download" [size]="15"></lucide-icon> CSV
+      </button>
+    </div>
+  </div>
+
+  <div class="scroll">
+    <table>
+      <thead>
+        <tr>
+          <th
+            *ngFor="let col of columns"
+            [ngClass]="'align-' + (col.align || 'left')"
+            [class.sortable]="col.sortable !== false"
+            [style.width]="col.width || null"
+            (click)="sortBy(col)"
+          >
+            <span class="th-inner">
+              {{ col.label }}
+              <lucide-icon
+                *ngIf="sortKey() === col.key"
+                [name]="sortDir() === 'asc' ? 'arrow-up' : 'arrow-down'"
+                [size]="13"
+              ></lucide-icon>
+            </span>
+          </th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <!-- Loading -->
+        <tr *ngIf="loading" class="sk-row-tr">
+          <td [attr.colspan]="columns.length">
+            <app-skeleton-loader variant="table-row" [count]="6"></app-skeleton-loader>
+          </td>
+        </tr>
+
+        <!-- Data -->
+        <ng-container *ngIf="!loading">
+          <tr *ngFor="let row of paged()">
+            <td *ngFor="let col of columns" [ngClass]="'align-' + (col.align || 'left')">
+              <ng-container [ngSwitch]="col.type">
+                <app-badge
+                  *ngSwitchCase="'badge'"
+                  [tone]="badgeTone(col, row)"
+                  [label]="badgeLabel(col, row)"
+                  [dot]="true"
+                ></app-badge>
+
+                <app-sla-bar *ngSwitchCase="'sla'" [value]="numberVal(col, row)"></app-sla-bar>
+
+                <span *ngSwitchCase="'rank'" class="rank">{{ cellText(col, row) }}</span>
+
+                <span *ngSwitchCase="'number'" class="mono num">{{ numberVal(col, row) | number: '1.0-0' }}</span>
+
+                <span *ngSwitchDefault>{{ cellText(col, row) }}</span>
+              </ng-container>
+            </td>
+          </tr>
+
+          <!-- Empty -->
+          <tr *ngIf="paged().length === 0" class="empty-tr">
+            <td [attr.colspan]="columns.length">
+              <div class="empty">
+                <lucide-icon name="inbox" [size]="26"></lucide-icon>
+                <span>Aucun résultat</span>
+              </div>
+            </td>
+          </tr>
+        </ng-container>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pager" *ngIf="!loading && totalPages() > 1">
+    <span class="count">{{ filtered().length }} lignes</span>
+    <div class="pager-btns">
+      <button type="button" class="btn btn-ghost" (click)="prev()" [disabled]="page() === 1">Précédent</button>
+      <span class="page-info mono">{{ page() }} / {{ totalPages() }}</span>
+      <button type="button" class="btn btn-ghost" (click)="next()" [disabled]="page() === totalPages()">Suivant</button>
+    </div>
+  </div>
+</div>

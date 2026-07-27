@@ -1,0 +1,48 @@
+<aside class="sidebar" [ngClass]="{ collapsed: collapsed }">
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div class="brand-text" [class.hidden]="collapsed">
+      <span class="brand-name">Sartex</span>
+      <span class="brand-sub">Intelligence</span>
+    </div>
+  </div>
+
+  <!-- Primary nav -->
+  <nav class="nav" aria-label="Navigation principale">
+    <a
+      *ngFor="let item of navItems"
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.aria-label]="item.label"
+      [attr.title]="collapsed ? item.label : null"
+    >
+      <span class="active-bar"></span>
+      <lucide-icon [name]="item.icon" [size]="19" class="nav-icon"></lucide-icon>
+      <span class="nav-label" [class.hidden]="collapsed">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="divider"></div>
+
+  <!-- Footer nav -->
+  <nav class="nav footer-nav" aria-label="Navigation secondaire">
+    <a
+      *ngFor="let item of footerNav"
+      [routerLink]="item.path"
+      routerLinkActive="active"
+      class="nav-item"
+      [attr.title]="collapsed ? item.label : null"
+    >
+      <span class="active-bar"></span>
+      <lucide-icon [name]="item.icon" [size]="19" class="nav-icon"></lucide-icon>
+      <span class="nav-label" [class.hidden]="collapsed">{{ item.label }}</span>
+    </a>
+    <button type="button" class="nav-item logout" (click)="logout.emit()" [attr.title]="collapsed ? 'Déconnexion' : null">
+      <span class="active-bar"></span>
+      <lucide-icon name="log-out" [size]="19" class="nav-icon"></lucide-icon>
+      <span class="nav-label" [class.hidden]="collapsed">Déconnexion</span>
+    </button>
+  </nav>
+</aside>

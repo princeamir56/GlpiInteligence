@@ -1,0 +1,51 @@
+<div class="login-card" [@fadeUp]>
+  <div class="brand">
+    <div class="brand-mark">S</div>
+    <div class="brand-text">
+      <span class="brand-name">Sartex Intelligence</span>
+      <span class="brand-sub">Tableau de bord IT</span>
+    </div>
+  </div>
+
+  <h1 class="title">Bon retour 👋</h1>
+  <p class="subtitle">Connectez-vous pour accéder à vos indicateurs.</p>
+
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <label class="field">
+      <span class="label">Identifiant</span>
+      <span class="input-wrap">
+        <lucide-icon name="user" [size]="17" class="lead"></lucide-icon>
+        <input type="text" formControlName="username" autocomplete="username" placeholder="votre.identifiant" />
+      </span>
+      <span class="err" *ngIf="f.username.touched && f.username.invalid">L'identifiant est requis.</span>
+    </label>
+
+    <label class="field">
+      <span class="label">Mot de passe</span>
+      <span class="input-wrap">
+        <lucide-icon name="lock" [size]="17" class="lead"></lucide-icon>
+        <input type="password" formControlName="password" autocomplete="current-password" placeholder="••••••••" />
+      </span>
+      <span class="err" *ngIf="f.password.touched && f.password.invalid">Mot de passe requis (3 caractères min).</span>
+    </label>
+
+    <div class="row">
+      <label class="remember">
+        <input type="checkbox" formControlName="remember" />
+        <span>Se souvenir de moi</span>
+      </label>
+    </div>
+
+    <div class="form-error" *ngIf="errorMsg()">
+      <lucide-icon name="alert-triangle" [size]="16"></lucide-icon>
+      {{ errorMsg() }}
+    </div>
+
+    <button type="submit" class="btn btn-primary submit" [disabled]="loading()">
+      <lucide-icon *ngIf="loading()" name="loader" [size]="17" class="spin"></lucide-icon>
+      {{ loading() ? 'Connexion…' : 'Se connecter' }}
+    </button>
+  </form>
+
+  <p class="foot">© {{ 2026 }} Sartex Group — Département IT</p>
+</div>

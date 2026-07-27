@@ -1,0 +1,299 @@
+/* ============================================================
+   Sartex Intelligence Dashboard — global styles & design tokens
+   Fonts loaded locally via @fontsource (no CDN).
+   ============================================================ */
+@import '@fontsource/inter/400.css';
+@import '@fontsource/inter/500.css';
+@import '@fontsource/inter/600.css';
+@import '@fontsource/inter/700.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/700.css';
+
+/* ---------- Design tokens (brand palette + semantics) ---------- */
+:root {
+  /* Sartex brand indigo scale */
+  --primary-900: #1a2352;
+  --primary-800: #27316e; /* Sartex brand core */
+  --primary-700: #323e8a;
+  --primary-600: #4451a3;
+  --primary-500: #5b69bc; /* interactive default */
+  --primary-400: #7f8bd1;
+  --primary-300: #a6afe0;
+  --primary-200: #ccd1ee;
+  --primary-100: #e6e9f7;
+  --primary-50: #f2f4fb;
+
+  /* Semantic */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+
+  --success-soft: rgba(16, 185, 129, 0.12);
+  --warning-soft: rgba(245, 158, 11, 0.12);
+  --danger-soft: rgba(239, 68, 68, 0.12);
+  --info-soft: rgba(59, 130, 246, 0.12);
+
+  /* Warm neutral (stone) scale */
+  --neutral-900: #1c1917;
+  --neutral-800: #292524;
+  --neutral-700: #44403c;
+  --neutral-600: #57534e;
+  --neutral-500: #78716c;
+  --neutral-400: #a8a29e;
+  --neutral-300: #d6d3d1;
+  --neutral-200: #e7e5e4;
+  --neutral-100: #f5f5f4;
+  --neutral-50: #fafaf9;
+
+  /* Typography */
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Radii & elevation */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 22px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 200ms;
+  --dur-slow: 300ms;
+
+  /* Sidebar is dark in BOTH themes (Linear/Vercel style) */
+  --sidebar-bg: #171b34;
+  --sidebar-surface: #1f2442;
+  --sidebar-text: #c7cbe6;
+  --sidebar-text-dim: #8085a8;
+  --sidebar-active-bg: rgba(91, 105, 188, 0.16);
+}
+
+/* ---------- Light theme (default) ---------- */
+:root,
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-base: #f7f8fc;
+  --bg-surface: #ffffff;
+  --bg-surface-2: var(--primary-50);
+  --bg-elevated: #ffffff;
+  --border-color: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --text-strong: var(--primary-900);
+  --text-base: var(--neutral-800);
+  --text-muted: var(--neutral-500);
+  --text-inverse: #ffffff;
+  --shadow-sm: 0 1px 2px rgba(26, 35, 82, 0.06);
+  --shadow-md: 0 4px 16px rgba(26, 35, 82, 0.08);
+  --shadow-lg: 0 12px 32px rgba(26, 35, 82, 0.12);
+  --brand-gradient: linear-gradient(135deg, var(--primary-800), var(--primary-600));
+}
+
+/* ---------- Dark theme ---------- */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg-base: #0f1330; /* very dark navy tinted toward brand */
+  --bg-surface: #161b3d;
+  --bg-surface-2: #1b2148;
+  --bg-elevated: #1d2450;
+  --border-color: rgba(166, 175, 224, 0.12);
+  --border-strong: rgba(166, 175, 224, 0.22);
+  --text-strong: #eef0fb;
+  --text-base: #c7cbe6;
+  --text-muted: #8085a8;
+  --text-inverse: #0f1330;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --brand-gradient: linear-gradient(135deg, var(--primary-700), var(--primary-500));
+}
+
+/* Follow system preference when no explicit choice is stored */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg-base: #0f1330;
+    --bg-surface: #161b3d;
+    --bg-surface-2: #1b2148;
+    --bg-elevated: #1d2450;
+    --border-color: rgba(166, 175, 224, 0.12);
+    --border-strong: rgba(166, 175, 224, 0.22);
+    --text-strong: #eef0fb;
+    --text-base: #c7cbe6;
+    --text-muted: #8085a8;
+    --text-inverse: #0f1330;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --brand-gradient: linear-gradient(135deg, var(--primary-700), var(--primary-500));
+  }
+}
+
+/* ---------- Reset & base ---------- */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  font-family: var(--font-ui);
+  background: var(--bg-base);
+  color: var(--text-base);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out);
+}
+h1, h2, h3, h4, h5 {
+  color: var(--text-strong);
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+a {
+  color: var(--primary-500);
+  text-decoration: none;
+}
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Accessible focus ring on keyboard nav */
+:focus-visible {
+  outline: 2px solid var(--primary-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Custom scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* ---------- Reusable primitives ---------- */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-weight: 500;
+  font-size: 13.5px;
+  transition: all var(--dur-base) var(--ease-out);
+}
+.btn-primary {
+  background: var(--brand-gradient);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover {
+  filter: brightness(1.06);
+  box-shadow: var(--shadow-md);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-base);
+  border-color: var(--border-color);
+}
+.btn-ghost:hover {
+  background: var(--bg-surface-2);
+  border-color: var(--border-strong);
+}
+
+/* ---------- Shared tab layout primitives ---------- */
+.charts {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.charts.two {
+  grid-template-columns: repeat(2, 1fr);
+}
+.chart-card {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 340px;
+}
+.chart-card h3 {
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+.chart-body {
+  position: relative;
+  flex: 1;
+  min-height: 260px;
+}
+@media (max-width: 900px) {
+  .charts.two {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- SweetAlert2 theming (reuses tokens) ---------- */
+.swal2-popup.sartex-popup {
+  background: var(--bg-elevated);
+  color: var(--text-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-ui);
+}
+.sartex-popup .swal2-title {
+  color: var(--text-strong);
+  font-weight: 600;
+}
+.sartex-popup .swal2-html-container {
+  color: var(--text-muted);
+}
+.sartex-confirm-btn {
+  background: var(--brand-gradient) !important;
+  border-radius: var(--radius-sm) !important;
+  box-shadow: none !important;
+  font-weight: 500 !important;
+}
+.sartex-cancel-btn {
+  background: transparent !important;
+  color: var(--text-base) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-sm) !important;
+}
+.sartex-toast {
+  background: var(--bg-elevated) !important;
+  color: var(--text-base) !important;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg) !important;
+}
+.sartex-toast .swal2-title {
+  color: var(--text-strong) !important;
+  font-size: 14px !important;
+}

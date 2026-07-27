@@ -1,0 +1,35 @@
+:host {
+  display: contents;
+}
+.sk {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-surface-2);
+  border-radius: var(--radius-sm);
+}
+.sk::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(127, 139, 209, 0.14),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.sk-text { height: 12px; margin: 6px 0; border-radius: 6px; }
+.sk-card { height: 120px; border-radius: var(--radius-lg); }
+.sk-kpi { height: 128px; border-radius: var(--radius-lg); }
+.sk-chart { height: 300px; border-radius: var(--radius-lg); }
+.sk-row { height: 44px; margin: 4px 0; }
+.sk-circle { border-radius: 50%; aspect-ratio: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sk::after { animation: none; }
+}

@@ -1,0 +1,65 @@
+<section class="page" [@fadeUp]>
+  <div class="page-head">
+    <h1>Paramètres</h1>
+    <p>Profil, thème et préférences de notification</p>
+  </div>
+
+  <!-- Profile -->
+  <div class="card section">
+    <h3>Profil</h3>
+    <div class="profile">
+      <span class="avatar">{{ (user?.full_name || user?.username || 'U').charAt(0).toUpperCase() }}</span>
+      <div class="profile-info">
+        <span class="p-name">{{ user?.full_name || user?.username || 'Utilisateur' }}</span>
+        <span class="p-role">{{ role || '—' }}</span>
+      </div>
+    </div>
+    <div class="rows">
+      <div class="row"><span class="k">Identifiant</span><span class="v">{{ user?.username || '—' }}</span></div>
+      <div class="row"><span class="k">Rôle</span><span class="v">{{ role || '—' }}</span></div>
+      <div class="row" *ngIf="user?.email"><span class="k">Email</span><span class="v">{{ user?.email }}</span></div>
+    </div>
+    <p class="note">Le profil est géré côté backend et en lecture seule ici.</p>
+  </div>
+
+  <!-- Theme -->
+  <div class="card section">
+    <h3>Apparence</h3>
+    <p class="section-sub">Choisissez le thème de l'interface.</p>
+    <div class="theme-choices">
+      <button
+        *ngFor="let opt of themeOptions"
+        type="button"
+        class="theme-choice"
+        [class.active]="preference() === opt.value"
+        (click)="setTheme(opt.value)"
+      >
+        <lucide-icon [name]="opt.icon" [size]="18"></lucide-icon>
+        {{ opt.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Notifications -->
+  <div class="card section">
+    <h3>Notifications</h3>
+    <div class="toggle-row">
+      <div>
+        <span class="t-label">Toasts en temps réel</span>
+        <span class="t-desc">Afficher les alertes critiques en haut à droite.</span>
+      </div>
+      <button type="button" class="switch" [class.on]="toastEnabled()" (click)="toggleToast()" [attr.aria-pressed]="toastEnabled()">
+        <span class="knob"></span>
+      </button>
+    </div>
+    <div class="toggle-row">
+      <div>
+        <span class="t-label">Compteur d'alertes</span>
+        <span class="t-desc">Badge de non-lus sur la cloche de l'en-tête.</span>
+      </div>
+      <button type="button" class="switch" [class.on]="badgeEnabled()" (click)="toggleBadge()" [attr.aria-pressed]="badgeEnabled()">
+        <span class="knob"></span>
+      </button>
+    </div>
+  </div>
+</section>

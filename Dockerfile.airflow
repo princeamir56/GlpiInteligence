@@ -1,0 +1,43 @@
+FROM apache/airflow:2.9.3-python3.11
+
+# Bake ETL deps into the image, using Airflow's official constraints file so we
+# don't accidentally upgrade SQLAlchemy / Flask / etc. and break airflow itself.
+ARG AIRFLOW_VERSION=2.9.3
+ARG PYTHON_VERSION=3.11
+ARG CONSTRAINTS_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+
+USER airflow
+RUN pip install --no-cache-dir --constraint "${CONSTRAINTS_URL}" \
+        pandas \
+        numpy \
+        psycopg2-binary \
+        redis \
+        python-dotenv \
+        requests \
+        apache-airflow-providers-postgres
+# Note: SQLAlchemy and Celery are already installed by Airflow at versions it
+# requires; do NOT re-pin them here. ETL code is written to work with SA 1.4 via
+# `create_engine(..., future=True)`.
+
+# ---- Layer 3 — ML engine deps ----
+# Installed WITHOUT the Airflow constraints file (the ML stack needs newer libs),
+# but with mlflow pinned <3 so it keeps SQLAlchemy 1.4 that Airflow 2.9 requires.
+# torch is the CPU wheel to keep the image slim and GPU-free.
+RUN pip install --no-cache-dir \
+        --extra-index-url https://download.pytorch.org/whl/cpu \
+        "scikit-learn>=1.4" \
+        "xgboost>=2.0" \
+        "prophet>=1.1" \
+        "mlflow>=2.12,<3" \
+        "pyyaml>=6.0" \
+        "spacy>=3.7" \
+        "sentence-transformers>=2.7" \
+        "transformers>=4.40" \
+        "torch>=2.2" \
+ && python -m spacy download fr_core_news_sm
+
+# Pre-cache the French sentence-transformers model into the image so inference
+# runs don't download it on first use. Cache dir matches ML_MODEL_CACHE_DIR.
+ENV ML_MODEL_CACHE_DIR=/opt/airflow/.model_cache
+RUN python -c "from sentence_transformers import SentenceTransformer as S; \
+S('paraphrase-multilingual-MiniLM-L12-v2', cache_folder='/opt/airflow/.model_cache')"

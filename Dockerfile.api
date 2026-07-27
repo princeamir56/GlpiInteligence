@@ -1,0 +1,25 @@
+# Layer 4 — FastAPI backend image. Deliberately separate from Dockerfile.airflow:
+# the API needs SQLAlchemy 2.x + asyncpg, which conflict with Airflow 2.9's SA 1.4.
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
+
+WORKDIR /app
+
+# Install only the API dependency set.
+COPY api/requirements-api.txt /app/api/requirements-api.txt
+RUN pip install --no-cache-dir -r /app/api/requirements-api.txt
+
+# Bring in the API package plus the layer-1/2/3 packages it imports config helpers from.
+COPY api /app/api
+COPY glpi_connector /app/glpi_connector
+COPY etl /app/etl
+COPY ml_engine /app/ml_engine
+
+EXPOSE 8000
+
+# 4 uvicorn workers under gunicorn. NOTE: the in-process WebSocket broadcaster is
+# per-worker; for multi-worker fan-out switch it to Redis pub/sub (see README).
+CMD ["gunicorn", "api.main:app", "-k", "uvicorn.workers.UvicornWorker", \
+     "-w", "4", "-b", "0.0.0.0:8000"]

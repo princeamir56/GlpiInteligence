@@ -1,0 +1,32 @@
+<app-tab-scaffold
+  title="Techniciens"
+  subtitle="Charge et performance des techniciens"
+  [error]="error()"
+  (retry)="load()"
+>
+  <div class="charts two">
+    <div class="chart-card card">
+      <h3>Charge vs Délai de résolution</h3>
+      <p class="hint">X : tickets traités · Y : résolution moyenne (j) · couleur : SLA %</p>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-scatter-chart *ngIf="!loading()" [points]="scatter()"></app-scatter-chart>
+      </div>
+    </div>
+    <div class="chart-card card">
+      <h3>SLA par technicien</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-bar-chart *ngIf="!loading()" [data]="slaChart()"></app-bar-chart>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    title="Détail des techniciens"
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    exportName="techniciens"
+  ></app-data-table>
+</app-tab-scaffold>

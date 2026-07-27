@@ -1,0 +1,31 @@
+<app-tab-scaffold
+  title="Services"
+  subtitle="Répartition des tickets par service"
+  [error]="error()"
+  (retry)="load()"
+>
+  <div class="charts two">
+    <div class="chart-card card">
+      <h3>Volume par service</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-bar-chart *ngIf="!loading()" [data]="barChart()"></app-bar-chart>
+      </div>
+    </div>
+    <div class="chart-card card">
+      <h3>Tickets ouverts par service</h3>
+      <div class="chart-body">
+        <app-skeleton-loader *ngIf="loading()" variant="chart"></app-skeleton-loader>
+        <app-donut-chart *ngIf="!loading()" [data]="donutChart()" centerLabel="Ouverts"></app-donut-chart>
+      </div>
+    </div>
+  </div>
+
+  <app-data-table
+    title="Détail des services"
+    [columns]="columns"
+    [rows]="rows()"
+    [loading]="loading()"
+    exportName="services"
+  ></app-data-table>
+</app-tab-scaffold>

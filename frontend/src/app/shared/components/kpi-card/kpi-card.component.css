@@ -1,0 +1,53 @@
+.kpi {
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+}
+.kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: var(--primary-100);
+  color: var(--primary-600);
+}
+:root[data-theme='dark'] .icon {
+  background: rgba(91, 105, 188, 0.16);
+  color: var(--primary-300);
+}
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+.delta.good { color: var(--success); background: var(--success-soft); }
+.delta.bad { color: var(--danger); background: var(--danger-soft); }
+.delta.flat { color: var(--text-muted); background: var(--bg-surface-2); }
+.value {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-strong);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.label {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}

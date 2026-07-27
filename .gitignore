@@ -1,0 +1,44 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ML / MLflow artifacts & caches
+mlruns/
+mlartifacts/
+mlflow.db
+.model_cache/
+*.pkl
+*.joblib
+
+# Airflow
+airflow/logs/
+airflow.cfg
+airflow-webserver.pid
+standalone_admin_password.txt
+
+# Node / Angular (frontend has its own .gitignore too)
+node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Docker / OS / editor cruft
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

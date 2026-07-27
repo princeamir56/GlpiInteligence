@@ -1,0 +1,25 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.tone-success { color: var(--success); background: var(--success-soft); border-color: rgba(16,185,129,0.25); }
+.tone-warning { color: var(--warning); background: var(--warning-soft); border-color: rgba(245,158,11,0.25); }
+.tone-danger  { color: var(--danger);  background: var(--danger-soft);  border-color: rgba(239,68,68,0.25); }
+.tone-info    { color: var(--info);    background: var(--info-soft);    border-color: rgba(59,130,246,0.25); }
+.tone-primary { color: var(--primary-600); background: var(--primary-100); border-color: var(--primary-200); }
+.tone-neutral { color: var(--text-muted); background: var(--bg-surface-2); border-color: var(--border-color); }
+:root[data-theme='dark'] .tone-primary { color: var(--primary-300); background: rgba(91,105,188,0.18); border-color: rgba(91,105,188,0.3); }

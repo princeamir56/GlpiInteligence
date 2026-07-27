@@ -1,0 +1,36 @@
+:host {
+  display: block;
+}
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+.page-head h1 {
+  font-size: 24px;
+}
+.page-head p {
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 60px 32px;
+  color: var(--text-muted);
+}
+.state lucide-icon {
+  color: var(--warning);
+}
+.state h3 {
+  font-size: 17px;
+}
+.state .btn {
+  margin-top: 8px;
+}

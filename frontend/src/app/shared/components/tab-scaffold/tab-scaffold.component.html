@@ -1,0 +1,20 @@
+<section class="page" [@fadeUp]>
+  <div class="page-head">
+    <div>
+      <h1>{{ title }}</h1>
+      <p *ngIf="subtitle">{{ subtitle }}</p>
+    </div>
+    <ng-content select="[actions]"></ng-content>
+  </div>
+
+  <div class="state card" *ngIf="error">
+    <lucide-icon name="alert-triangle" [size]="30"></lucide-icon>
+    <h3>Impossible de charger les données</h3>
+    <p>Vérifiez que le backend est démarré sur localhost:8000.</p>
+    <button class="btn btn-primary" (click)="retry.emit()">Réessayer</button>
+  </div>
+
+  <div *ngIf="!error">
+    <ng-content></ng-content>
+  </div>
+</section>

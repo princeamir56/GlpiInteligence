@@ -1,0 +1,59 @@
+<header class="header">
+  <!-- Left: collapse + title/breadcrumb -->
+  <div class="left">
+    <button type="button" class="icon-btn" (click)="toggleSidebar.emit()" aria-label="Basculer le menu">
+      <lucide-icon name="menu" [size]="20"></lucide-icon>
+    </button>
+    <div class="titles">
+      <span class="crumb">Sartex&nbsp;/&nbsp;Analytics</span>
+      <h1 class="page-title">{{ title() }}</h1>
+    </div>
+  </div>
+
+  <!-- Center: search -->
+  <div class="search">
+    <lucide-icon name="search" [size]="17" class="search-icon"></lucide-icon>
+    <input
+      type="text"
+      placeholder="Rechercher un onglet, un ticket…"
+      [(ngModel)]="search"
+      (keyup.enter)="submitSearch(search())"
+      aria-label="Recherche"
+    />
+    <kbd class="kbd">/</kbd>
+  </div>
+
+  <!-- Right: actions -->
+  <div class="actions">
+    <button type="button" class="icon-btn bell" (click)="clearBadge()" aria-label="Notifications">
+      <lucide-icon name="bell" [size]="19"></lucide-icon>
+      <span class="badge" *ngIf="unread() > 0">{{ unread() > 99 ? '99+' : unread() }}</span>
+    </button>
+
+    <app-theme-toggle></app-theme-toggle>
+
+    <div class="user-menu">
+      <button type="button" class="user-btn" (click)="toggleMenu()" aria-haspopup="menu" [attr.aria-expanded]="menuOpen()">
+        <span class="avatar">{{ (user?.full_name || user?.username || 'U').charAt(0).toUpperCase() }}</span>
+        <span class="user-info">
+          <span class="user-name">{{ user?.full_name || user?.username || 'Utilisateur' }}</span>
+          <span class="user-role">{{ role || '—' }}</span>
+        </span>
+        <lucide-icon name="chevron-down" [size]="15"></lucide-icon>
+      </button>
+
+      <div class="dropdown" *ngIf="menuOpen()" role="menu">
+        <div class="dd-head">
+          <span class="user-name">{{ user?.full_name || user?.username }}</span>
+          <span class="user-role-pill">{{ role }}</span>
+        </div>
+        <a class="dd-item" routerLink="/settings" (click)="menuOpen.set(false)">
+          <lucide-icon name="settings" [size]="16"></lucide-icon> Paramètres
+        </a>
+        <button class="dd-item danger" (click)="logout.emit()">
+          <lucide-icon name="log-out" [size]="16"></lucide-icon> Déconnexion
+        </button>
+      </div>
+    </div>
+  </div>
+</header>

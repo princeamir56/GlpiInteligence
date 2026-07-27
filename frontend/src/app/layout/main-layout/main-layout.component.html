@@ -1,0 +1,13 @@
+<div class="shell">
+  <app-sidebar [collapsed]="collapsed()" (logout)="logout()"></app-sidebar>
+
+  <div class="main">
+    <app-header (toggleSidebar)="toggleSidebar()" (logout)="logout()"></app-header>
+
+    <main class="content">
+      <div class="content-inner" [@routeFade]="prepareRoute(outlet)">
+        <router-outlet #outlet="outlet"></router-outlet>
+      </div>
+    </main>
+  </div>
+</div>

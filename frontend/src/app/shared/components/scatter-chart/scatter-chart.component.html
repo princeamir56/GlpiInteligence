@@ -1,0 +1,10 @@
+<div class="chart-wrap">
+  <canvas
+    *ngIf="hasData && config() as cfg"
+    baseChart
+    [type]="cfg.type"
+    [data]="cfg.data"
+    [options]="cfg.options"
+  ></canvas>
+  <div class="no-data" *ngIf="!hasData">Aucune donnée</div>
+</div>

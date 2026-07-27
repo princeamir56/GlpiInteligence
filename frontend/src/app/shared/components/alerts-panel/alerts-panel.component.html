@@ -1,0 +1,37 @@
+<div class="panel card">
+  <div class="panel-head">
+    <h3><lucide-icon name="alert-triangle" [size]="17"></lucide-icon> Alertes ML</h3>
+  </div>
+
+  <div class="list" *ngIf="loading">
+    <app-skeleton-loader variant="card" [count]="3" height="72px"></app-skeleton-loader>
+  </div>
+
+  <div class="list" *ngIf="!loading" appStagger>
+    <div class="alert" *ngFor="let a of alerts" [class]="severityClass(a.severity)">
+      <span class="dot"></span>
+      <div class="body">
+        <div class="a-head">
+          <span class="a-title">{{ a.title }}</span>
+          <span class="sev">{{ a.severity }}</span>
+        </div>
+        <p class="a-desc">{{ a.description }}</p>
+      </div>
+      <button
+        type="button"
+        class="ack"
+        (click)="acknowledge.emit(a)"
+        [disabled]="a.acknowledged"
+        [attr.aria-label]="'Acquitter ' + a.title"
+      >
+        <lucide-icon [name]="a.acknowledged ? 'check-check' : 'check'" [size]="15"></lucide-icon>
+        {{ a.acknowledged ? 'Acquittée' : 'Acquitter' }}
+      </button>
+    </div>
+
+    <div class="empty" *ngIf="alerts.length === 0">
+      <lucide-icon name="check-check" [size]="24"></lucide-icon>
+      <span>Aucune alerte active</span>
+    </div>
+  </div>
+</div>

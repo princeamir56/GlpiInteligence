@@ -1,0 +1,16 @@
+<div class="chart-wrap">
+  <ng-container *ngIf="hasData; else empty">
+    <canvas
+      *ngIf="config() as cfg"
+      baseChart
+      [type]="cfg.type"
+      [data]="cfg.data"
+      [options]="cfg.options"
+    ></canvas>
+    <div class="center">
+      <span class="total mono">{{ total() | number: '1.0-0' }}</span>
+      <span class="center-label">{{ centerLabel }}</span>
+    </div>
+  </ng-container>
+  <ng-template #empty><div class="no-data">Aucune donnée</div></ng-template>
+</div>

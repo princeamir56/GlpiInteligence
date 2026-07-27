@@ -1,0 +1,99 @@
+{
+  "app": {
+    "name": "Sartex Intelligence",
+    "subtitle": "Tableau de bord IT"
+  },
+  "nav": {
+    "dashboard": "Vue d'ensemble",
+    "demandeurs": "Demandeurs",
+    "services": "Services",
+    "sites": "Sites",
+    "repetitifs": "Répétitifs",
+    "techniciens": "Techniciens",
+    "categories": "Catégories",
+    "settings": "Paramètres",
+    "logout": "Déconnexion"
+  },
+  "header": {
+    "searchPlaceholder": "Rechercher un onglet, un ticket…",
+    "notifications": "Notifications"
+  },
+  "login": {
+    "welcome": "Bon retour",
+    "subtitle": "Connectez-vous pour accéder à vos indicateurs.",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "remember": "Se souvenir de moi",
+    "submit": "Se connecter",
+    "submitting": "Connexion…",
+    "errorInvalid": "Identifiants incorrects. Veuillez réessayer.",
+    "errorServer": "Connexion impossible. Vérifiez que le serveur est démarré."
+  },
+  "common": {
+    "total": "Total",
+    "incidents": "Incidents",
+    "requests": "Demandes",
+    "open": "Ouverts",
+    "sla": "SLA",
+    "search": "Rechercher…",
+    "export": "CSV",
+    "retry": "Réessayer",
+    "noData": "Aucune donnée",
+    "noResults": "Aucun résultat",
+    "loadError": "Impossible de charger les données",
+    "loadErrorHint": "Vérifiez que le backend est démarré sur localhost:8000.",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "rows": "lignes"
+  },
+  "dashboard": {
+    "title": "Vue d'ensemble",
+    "subtitle": "Indicateurs clés et signaux ML du support IT",
+    "topSites": "Top sites",
+    "topCategories": "Top catégories",
+    "topRequesters": "Top demandeurs",
+    "slaPerTechnician": "SLA par technicien",
+    "mlAlerts": "Alertes ML",
+    "acknowledge": "Acquitter",
+    "acknowledged": "Acquittée",
+    "noAlerts": "Aucune alerte active"
+  },
+  "demandeurs": {
+    "title": "Demandeurs",
+    "subtitle": "Analyse des demandeurs les plus actifs",
+    "profile": "Profil",
+    "profiles": {
+      "autonome": "Autonome",
+      "standard": "Standard",
+      "dependant": "Dépendant",
+      "critique": "Critique"
+    }
+  },
+  "services": { "title": "Services", "subtitle": "Répartition des tickets par service" },
+  "sites": { "title": "Sites", "subtitle": "Volume et SLA par site géographique" },
+  "categories": { "title": "Catégories", "subtitle": "Distribution des tickets par catégorie" },
+  "techniciens": {
+    "title": "Techniciens",
+    "subtitle": "Charge et performance des techniciens",
+    "scatterHint": "X : tickets traités · Y : résolution moyenne (j) · couleur : SLA %"
+  },
+  "repetitifs": {
+    "title": "Répétitifs",
+    "subtitle": "Tickets récurrents et causes racines détectées par le clustering ML",
+    "rootCauses": "Causes racines",
+    "keywords": "Mots-clés",
+    "noClusters": "Aucun cluster récurrent détecté"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "subtitle": "Profil, thème et préférences de notification",
+    "profile": "Profil",
+    "appearance": "Apparence",
+    "themeLight": "Clair",
+    "themeDark": "Sombre",
+    "themeAuto": "Système",
+    "notifications": "Notifications",
+    "toastLabel": "Toasts en temps réel",
+    "badgeLabel": "Compteur d'alertes"
+  }
+}
