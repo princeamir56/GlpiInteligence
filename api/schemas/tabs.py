@@ -49,7 +49,7 @@ class ServicesResponse(BaseModel):
 
 # ---- /api/sites ----
 class SiteRow(BaseModel):
-    entity_id: int
+    entity_id: Optional[int] = None
     name: str
     total: int
     resolved: int
@@ -100,7 +100,8 @@ class TechniciensResponse(BaseModel):
 
 # ---- /api/categories ----
 class CategoryRow(BaseModel):
-    category_id: int
+    # NULL when the ticket carries no category in GLPI — a real state, not an error.
+    category_id: Optional[int] = None
     name: str
     total: int
     resolved: int

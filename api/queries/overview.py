@@ -12,7 +12,7 @@ from ..schemas.overview import (
     OverviewResponse,
     TechnicianSla,
 )
-from .shared import IS_OPEN_EXPR, SLA_MET_EXPR, USER_NAME_EXPR, ticket_filters
+from .shared import IS_OPEN_EXPR, SLA_MET_EXPR, ticket_filters, user_name_expr
 
 
 async def _scalar(session: AsyncSession, sql: str, params: dict):
@@ -31,7 +31,7 @@ async def get_overview(session: AsyncSession, f) -> OverviewResponse:
                     COUNT(*)                                             AS total,
                     COALESCE(AVG(CASE WHEN is_resolved THEN 1.0 ELSE 0.0 END),0) AS resolved_pct,
                     COALESCE(AVG(CASE WHEN {SLA_MET_EXPR} THEN 1.0 ELSE 0.0 END),0) AS sla_pct,
-                    COUNT(DISTINCT entities_id)                          AS active_sites
+                    COUNT(DISTINCT NULLIF(entities_id, 0))               AS active_sites
                 FROM dim_tickets_enriched
                 WHERE {frag}
                 """
@@ -60,6 +60,7 @@ async def get_overview(session: AsyncSession, f) -> OverviewResponse:
                     FROM dim_tickets_enriched t
                     LEFT JOIN dim_entities e ON e.id = t.entities_id
                     WHERE {ticket_filters(f, prefix='t.')[0]}
+                      AND (t.entities_id IS NULL OR t.entities_id <> 0)
                     GROUP BY t.entities_id, e.name
                     ORDER BY c DESC LIMIT 10
                     """
@@ -102,7 +103,7 @@ async def get_overview(session: AsyncSession, f) -> OverviewResponse:
             await session.execute(
                 text(
                     f"""
-                    SELECT t.user_requester AS uid, {USER_NAME_EXPR} AS name, COUNT(*) AS c
+                    SELECT t.user_requester AS uid, {user_name_expr('t.user_requester')} AS name, COUNT(*) AS c
                     FROM dim_tickets_enriched t
                     LEFT JOIN dim_users u ON u.id = t.user_requester
                     WHERE {ticket_filters(f, prefix='t.')[0]} AND t.user_requester IS NOT NULL
@@ -127,7 +128,7 @@ async def get_overview(session: AsyncSession, f) -> OverviewResponse:
             await session.execute(
                 text(
                     f"""
-                    SELECT t.user_assign AS tid, {USER_NAME_EXPR} AS name,
+                    SELECT t.user_assign AS tid, {user_name_expr('t.user_assign')} AS name,
                            COUNT(*) AS total,
                            AVG(CASE WHEN {SLA_MET_EXPR} THEN 1.0 ELSE 0.0 END) AS sla_pct
                     FROM dim_tickets_enriched t

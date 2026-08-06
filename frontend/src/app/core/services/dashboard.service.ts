@@ -48,7 +48,7 @@ function toOverview(b: BackendOverview): Overview {
       { key: 'sla_global_pct', label: 'SLA global', value: b.kpis.sla_global_pct, unit: '%' },
       { key: 'repetitive_count', label: 'Tickets répétitifs', value: b.kpis.repetitive_count },
       { key: 'active_sites_count', label: 'Sites actifs', value: b.kpis.active_sites_count },
-      { key: 'top_category', label: 'Top catégorie', value: 0, unit: b.kpis.top_category ?? '—' } as any,
+      { key: 'top_category', label: 'Top catégorie', value: 0, text: b.kpis.top_category ?? '—' },
     ],
     charts: {
       top_sites: toSeries(b.charts.top_sites, 'Tickets'),

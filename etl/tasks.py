@@ -53,7 +53,7 @@ def transform_tickets_task(raw_rows: list[dict[str, Any]]) -> dict[str, Any]:
 def load_tickets_task(records: list[dict[str, Any]]) -> int:
     import pandas as pd
     from .config import ETLConfig
-    from .load import ensure_schema, get_engine, load_tickets
+    from .load import ensure_schema, get_engine, load_tickets, resolve_fk_display_names
 
     engine = get_engine(ETLConfig.from_env())
     ensure_schema(engine)
@@ -61,6 +61,11 @@ def load_tickets_task(records: list[dict[str, Any]]) -> int:
     for col in ("date", "date_mod", "solvedate", "closedate", "time_to_resolve"):
         if col in df.columns:
             df[col] = pd.to_datetime(df[col], errors="coerce")
+    # FK columns are BIGINT in the warehouse but GLPI /search returns display
+    # names for them (e.g. entities_id = "Root entity > Usine A"). Resolve those
+    # strings back to real ids against the dimension tables — coercing them
+    # straight to numeric would satisfy the BIGINT type and null out every FK.
+    df = resolve_fk_display_names(engine, df)
     return load_tickets(engine, df)
 
 

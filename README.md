@@ -29,7 +29,18 @@ pip install -r requirements.txt
 
 1. **Enable the REST API**
    In GLPI: *Setup → General → API*. Tick *Enable REST API* and copy the public
-   URL (something like `https://glpi.company.tld/apirest.php`).
+   URL. **The path differs by GLPI major version:**
+
+   | GLPI | base URL |
+   | --- | --- |
+   | 9.x / 10.x | `https://glpi.company.tld/apirest.php` |
+   | **11.x** | `https://glpi.company.tld/api.php/v1` |
+
+   > **Running GLPI on the Docker host?** Containers resolve `127.0.0.1` to
+   > *themselves*, so a host-local GLPI must be reached as
+   > `http://host.docker.internal:8080/api.php/v1` from inside the stack. Compose
+   > already defaults `GLPI_BASE_URL_CONTAINER` to that; keep the plain
+   > `127.0.0.1` form in `.env` for host-side scripts.
 2. **Create an API client (App-Token)**
    *Setup → General → API → Add API client*. Set the IP range that may use it,
    tick *Active*, save, and copy the generated **App-Token**.
@@ -47,6 +58,35 @@ pip install -r requirements.txt
 ```bash
 python scripts/test_connection.py
 ```
+
+## Populate a live GLPI with realistic demo data
+
+The pipeline consumes GLPI in real time — it does **not** carry any static
+warehouse-side fixtures. To make the dashboard light up end-to-end, seed the
+GLPI instance itself via its REST API:
+
+```bash
+# uses the same GLPI_* vars from .env — no extra config
+python scripts/populate_glpi.py                 # large: ~150 users, ~2500 tickets, 6 months
+python scripts/populate_glpi.py --volume medium
+python scripts/populate_glpi.py --volume small
+python scripts/populate_glpi.py --dry-run       # preview without writing
+
+# undo everything the script created (uses scripts/.populate_state.json)
+python scripts/populate_glpi.py --wipe-created
+```
+
+The script creates 5 sites (entities), 11 department/IT groups, the full ITIL
+category tree (ERP, Bureautique, Sécurité, Réseau, …), 8 technicians (incl.
+Karim M. on Infrastructure Réseau as the overloaded one per the PDF), ~150
+end-users spread across departments, and thousands of French tickets with
+followups whose sentiment/keywords match the PDF vocabulary. Ticket creation
+dates apply Monday-morning + end-of-month seasonality so the ETL's temporal
+features surface the same signals the PDF describes.
+
+Once GLPI is populated, trigger the `glpi_polling` DAG (layer 2) to pull the
+data into the warehouse, then `ml_inference` (layer 3) to compute predictions
+and recommendations — the Angular dashboard will populate from there.
 
 It opens a session, iterates `/search/Ticket` to count rows, and closes the
 session. Exit code `0` means everything is wired up.
@@ -126,16 +166,34 @@ Services started:
 - `redis`      — Celery broker + cache (db 0 = ETL cache, db 1 = Airflow celery)
 - `airflow-webserver` / `airflow-scheduler` / `airflow-worker`
 - `glpi-etl-worker` — separate Celery worker for `etl.tasks`
+- `mlflow-ui` (layer 3, :5000) and `api` (layer 4, :8000)
+
+Every service sets `restart: unless-stopped`. This matters: without it on
+`postgres`/`redis`, a Docker Desktop restart brings the app containers back but
+leaves the databases down, and the whole stack fails on connect while *looking*
+half-healthy.
+
+> **Port 8080 is shared.** `airflow-webserver` publishes 8080, which is also the
+> usual port for a host-local GLPI. They can coexist only if GLPI binds
+> `127.0.0.1` and Docker takes the wildcard — otherwise remap one of them.
 
 ## Airflow setup (one-time)
 
-In the Airflow UI → **Admin → Variables**, set:
+Only needed when you are **not** using docker-compose. In the Airflow UI →
+**Admin → Variables**, set:
 
 | Key | Value |
 | --- | --- |
-| `GLPI_BASE_URL`  | e.g. `https://glpi.company.tld/apirest.php` |
+| `GLPI_BASE_URL`  | e.g. `https://glpi.company.tld/api.php/v1` (GLPI 11) |
 | `GLPI_APP_TOKEN` | from GLPI |
 | `GLPI_USER_TOKEN`| from GLPI |
+
+> **Environment variables win.** `etl/config.py` reads the process environment
+> first, and compose injects `GLPI_BASE_URL` / `GLPI_APP_TOKEN` /
+> `GLPI_USER_TOKEN` into every Airflow container. Editing the Airflow Variable
+> while running under compose therefore has **no effect** — change `.env` and
+> `docker compose up -d` the affected services instead. This is a common source
+> of "I updated the URL and nothing changed".
 
 In **Admin → Connections**, create `postgres_glpi`:
 - Conn Id: `postgres_glpi`
@@ -144,6 +202,39 @@ In **Admin → Connections**, create `postgres_glpi`:
 
 The DAG `glpi_polling` is scheduled `*/10 * * * *`. Trigger it once manually to
 verify, then watch `dim_tickets_enriched` fill in.
+
+### How foreign keys are resolved (important)
+
+`/search/Ticket` returns **display names, not ids**, for every dropdown-backed
+column — `entities_id` comes back as `"Root entity > Usine A"`, not `2`. The
+warehouse columns are `BIGINT`, so these cannot be inserted directly.
+
+The pipeline therefore:
+
+1. `transform.coerce_fk_ids` keeps the raw string in `<col>_display` and sets the
+   numeric column to `NA`;
+2. `load.resolve_fk_display_names` matches that string back to a real id against
+   the dimension tables, indexing several spellings per row (`name`,
+   `completename`, the leaf of an `A > B > C` path, and for users both
+   `"realname firstname"` and `"firstname realname"`).
+
+Two consequences to respect when editing this code:
+
+- **Dimensions must load before tickets.** `load_postgres_task` calls
+  `load_dimensions_task` first for exactly this reason. Reverse it and every FK
+  silently becomes `NULL`.
+- **Never "fix" a datatype mismatch with a bare `pd.to_numeric(..., errors='coerce')`
+  on these columns.** It satisfies the `BIGINT` type by throwing the value away —
+  the tickets load fine and every category/site/user link is quietly `NULL`.
+
+A ticket with no category in GLPI legitimately keeps `itilcategories_id = NULL`;
+the API renders those as *Sans catégorie*. Sanity-check the fill rate with:
+
+```bash
+docker compose exec postgres psql -U glpi -d glpi_dw -c \
+  "SELECT count(*) total, count(itilcategories_id) cat, count(entities_id) ent
+     FROM dim_tickets_enriched;"
+```
 
 ## Verifying
 
@@ -205,11 +296,28 @@ and `recommendations` (DDL in `ml_engine/schema.sql`).
 - **Embeddings**: `sentence-transformers` `paraphrase-multilingual-MiniLM-L12-v2`
   (French-capable, ~470 MB, CPU-friendly) rather than CamemBERT. Weights are baked
   into the Airflow image so inference never re-downloads them.
-- **MLflow**: **SQLite-backed** tracking (`sqlite:///mlflow.db`) + artifacts under
-  `./mlartifacts`. A DB backend is **required** for the model registry / Production
-  stage — a plain `file:./mlruns` store cannot register models. MLflow is pinned
-  `>=2.12,<3` because 3.x needs SQLAlchemy 2.0, which conflicts with Airflow 2.9.3
-  (SQLAlchemy 1.4).
+- **MLflow**: **SQLite-backed** tracking. A DB backend is **required** for the
+  model registry / Production stage — a plain `file:./mlruns` store cannot
+  register models. MLflow is pinned `>=2.12,<3` because 3.x needs SQLAlchemy 2.0,
+  which conflicts with Airflow 2.9.3 (SQLAlchemy 1.4). Paths differ by context:
+
+  | | tracking URI | artifacts |
+  | --- | --- | --- |
+  | local | `sqlite:///mlflow.db` | `./mlartifacts` |
+  | **compose** | `sqlite:////opt/airflow/mlruns/mlflow.db` | `/opt/airflow/mlruns/artifacts` |
+
+  In compose both live on the shared `mlruns` volume so every worker and the
+  MLflow UI see the same registry. **That volume must be writable by uid 50000**
+  (the `airflow` user). `Dockerfile.airflow` creates `/opt/airflow/mlruns` in the
+  image so a fresh named volume inherits airflow ownership — if the directory
+  were absent, Docker would create it `root`-owned and *every* ML task would die
+  with `sqlite3.OperationalError: unable to open database file`. To repair an
+  already-root-owned volume:
+
+  ```bash
+  docker run --rm --user 0:0 -v glpiinteligence_mlruns:/mnt alpine \
+    sh -c "mkdir -p /mnt/artifacts && chown -R 50000:0 /mnt"
+  ```
 - **Cold start**: below `ML_COLD_START_MIN_ROWS` (default 100) rows the classifier
   and SLA model skip training and warn; the forecaster falls back to trailing
   averages flagged `confidence: low`.
@@ -278,6 +386,24 @@ check_data_freshness
 Trigger it once manually from the Airflow UI (http://localhost:8080) to verify.
 Both `ml_inference` and `ml_retrain` appear there automatically — their DAG files
 are mounted under `dags/ml_engine/`.
+
+> **The four model tasks run one at a time** (`max_active_tasks=1`), and Celery
+> worker concurrency is capped at 2 (`AIRFLOW__CELERY__WORKER_CONCURRENCY`).
+> Celery otherwise defaults to one process per CPU, which lets a dozen
+> memory-hungry tasks (Prophet, sentence-transformers, spaCy, XGBoost) start
+> simultaneously and get OOM-killed on a small Docker VM. Serialising them also
+> avoids concurrent Alembic migrations racing on the single SQLite tracking file
+> the first time MLflow initialises — a failure that shows up as a task exiting
+> with code 1 and **no Python traceback**.
+
+On a fresh volume the first MLflow call runs the full Alembic migration chain.
+Do it once, serially, before the first DAG run:
+
+```bash
+docker compose exec airflow-worker python -c \
+  "import mlflow,os; mlflow.set_tracking_uri(os.environ['MLFLOW_TRACKING_URI']); \
+   from mlflow.tracking import MlflowClient; MlflowClient().search_experiments()"
+```
 
 ## 4. Verify predictions landed in Postgres
 
@@ -638,4 +764,139 @@ frontend/src/app/
 > **Response shapes**: the TypeScript models under `core/models/` mirror the layer-4
 > Pydantic schemas. If you change an API response, update the matching model (and any
 > mapping in the tab component) so the tab reads the new fields.
+
+---
+
+# Operations & Troubleshooting
+
+Failure modes seen on this stack, with the diagnosis that actually identifies
+each one. Work top-down: most "the dashboard is wrong" reports are the first two.
+
+## Diagnostic order
+
+```bash
+docker compose ps                        # all 9 up? postgres/redis healthy?
+docker compose exec -T postgres psql -U glpi -d glpi_dw -c \
+  "SELECT count(*) total, count(itilcategories_id) cat FROM dim_tickets_enriched;"
+docker compose exec -T postgres psql -U airflow -d airflow -c \
+  "SELECT dag_id, run_id, state FROM dag_run ORDER BY start_date DESC LIMIT 5;"
+```
+
+Airflow's CLI is slow and hangs when the scheduler is busy; querying the metadata
+DB directly (as above) is faster and more reliable for run/task state.
+
+## The dashboard shows a stale or wrong ticket count
+
+The warehouse is authoritative — check it before touching the API:
+
+```bash
+docker compose exec -T postgres psql -U glpi -d glpi_dw -c \
+  "SELECT count(*) FROM dim_tickets_enriched;"
+```
+
+- **Warehouse also low** → the ETL is the problem. Note GLPI caps `/search` page
+  size (`list_limit_max`, often 500) and trims the last page; `client.search`
+  advances by `len(data)`, never by the requested `size`, or pagination silently
+  stops early.
+- **Warehouse correct, API stale** → the overview response is cached 60 s:
+  `docker compose exec redis redis-cli -n 0 FLUSHDB`.
+
+## A tab shows "Impossible de charger les données" / `0 Unknown Error`
+
+Status `0` means the browser never got a readable response — it is **not** an API
+error code. Reproduce server-side to get the real status:
+
+```bash
+TOKEN=$(curl -s -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"dsi@sartex","password":"dsi-dev-password"}' \
+  | python -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8000/api/categories \
+  -H "Authorization: Bearer $TOKEN"
+docker compose logs --tail 200 api | grep "unhandled error"
+```
+
+`CORSMiddleware` is registered **last** in `api/main.py` so it is the outermost
+layer. Starlette wraps middleware in reverse registration order — register CORS
+before the error-handling `context_middleware` and the 500 it synthesises escapes
+without an `Access-Control-Allow-Origin` header, so the browser blocks it and the
+UI can only report an opaque `0`. Keep CORS last.
+
+### Two SQL traps behind those 500s
+
+- **`'x #'||NULL` is `NULL` in SQL.** A label built by concatenating a nullable id
+  yields `NULL`, not the prefix, and fails a non-optional Pydantic `str`. Always
+  end the `COALESCE` with a literal (`'Sans catégorie'`, `'Sans site'`, `'Inconnu'`).
+- **A `LEFT JOIN` fallback must use the fact-side column.** `COALESCE(..., u.id)`
+  is `NULL` on a join miss; use the ticket-side id (`t.user_assign`) — see
+  `queries/shared.py::user_name_expr`.
+
+**asyncpg is strict about parameter types**: it infers `$1` in
+`(:horizon || ' days')::interval` as text and rejects an int bind. Use
+`make_interval(days => :horizon)`. Likewise it refuses a tz-aware datetime bound
+against a naive `TIMESTAMP` column.
+
+## An Airflow task fails
+
+Read the task log before re-triggering — retriggering a task that fails
+deterministically just burns minutes:
+
+```bash
+docker compose exec airflow-scheduler bash -lc \
+  "tail -n 40 '/opt/airflow/logs/dag_id=<dag>/run_id=<run_id>/task_id=<task>/attempt=1.log'"
+```
+
+- **`column "is_active" is of type boolean but expression is of type bigint`** —
+  pandas infers the staging table's types, and GLPI returns `0/1` for booleans.
+  Dimension columns are cast explicitly in `load.DIM_COLUMN_CASTS`; extend it
+  when adding a column rather than casting in SQL.
+- **`'DateTime' object is not subscriptable`** — Airflow injects `execution_date`
+  as a pendulum `DateTime`, not a string. Normalise it (`_to_day_iso`) instead of
+  slicing.
+- **Exit code 1 with no traceback** — the process was killed (OOM) or died in a
+  native/migration step. Check `docker stats` and the VM's own memory
+  (`docker run --rm alpine free -m`); if swap is near-full, reduce concurrency
+  rather than raising limits.
+- **Task stuck `queued` > 5 min** — check the DAG is unpaused, `max_active_runs`
+  /`max_active_tasks` aren't already saturated by an orphaned `running` run, and
+  that a worker is actually alive.
+- **Orphaned `running` run** (left by a Docker restart) blocks the next run under
+  `max_active_runs=1`; clear it:
+  ```bash
+  docker compose exec -T postgres psql -U airflow -d airflow -c \
+    "UPDATE dag_run SET state='failed', end_date=NOW()
+       WHERE dag_id='glpi_polling' AND state='running';"
+  ```
+
+## Docker Desktop hangs or returns HTTP 500
+
+On a memory-constrained host the engine itself becomes unresponsive — `docker ps`
+hangs and the API returns
+`request returned 500 Internal Server Error ... /containers/json`. This is the
+host, not the pipeline. Recover with `docker desktop restart`, then confirm
+`postgres`/`redis` came back up.
+
+**Sizing:** the full stack (9 containers, Airflow + 2 Celery workers + Postgres +
+the ML libraries) wants **~6 GB** for Docker, and Docker's allocation should stay
+**well under total host RAM** — allocating 6 GB on an 8 GB machine starves
+Windows and makes the engine *less* stable, not more. On a small host, prefer:
+
+```bash
+docker compose stop mlflow-ui airflow-webserver   # optional; frees ~500 MB
+```
+
+Both are convenience UIs — DAGs run fine without them (trigger via
+`docker compose exec airflow-scheduler airflow dags trigger <dag>`).
+
+## PowerShell notes (Windows)
+
+`docker compose exec -T <svc> python -c "..."` mangles quoting badly. Pipe a
+file instead:
+
+```powershell
+Get-Content script.py -Raw | docker compose exec -T airflow-worker python -
+```
+
+Accented output (`Réseau` → `RÃ©seau`) in the PowerShell console is a terminal
+encoding artefact, not corrupted data — verify with `psql` before "fixing" it.
 

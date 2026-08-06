@@ -26,6 +26,16 @@ from ..schemas.common import WsAlert
 logger = logging.getLogger("api.alerts")
 
 
+def _as_naive_utc(dt: datetime) -> datetime:
+    """Drop tzinfo (converting to UTC first) so the value can be compared to
+    `recommendations.created_at`, which is a naive TIMESTAMP. asyncpg refuses
+    to bind an aware datetime against a naive column.
+    """
+    if dt.tzinfo is None:
+        return dt
+    return dt.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 class AlertBroadcaster:
     def __init__(self) -> None:
         self._clients: set = set()
@@ -67,12 +77,18 @@ class AlertBroadcaster:
         async with sm() as session:
             if self._last_seen is None:
                 # first pass: establish the high-water mark, don't replay history
+                # NOW() is timestamptz and would promote the whole COALESCE to
+                # an aware value; cast so the high-water mark stays naive like
+                # the column it is compared against.
                 row = (
                     await session.execute(
-                        text("SELECT COALESCE(MAX(created_at), NOW()) FROM recommendations")
+                        text(
+                            "SELECT COALESCE(MAX(created_at), NOW()::timestamp) "
+                            "FROM recommendations"
+                        )
                     )
                 ).scalar()
-                self._last_seen = row or datetime.now(timezone.utc)
+                self._last_seen = _as_naive_utc(row or datetime.now(timezone.utc))
                 return
             rows = (
                 await session.execute(
@@ -84,7 +100,7 @@ class AlertBroadcaster:
                         ORDER BY created_at ASC
                         """
                     ),
-                    {"since": self._last_seen},
+                    {"since": _as_naive_utc(self._last_seen)},
                 )
             ).all()
         for r in rows:

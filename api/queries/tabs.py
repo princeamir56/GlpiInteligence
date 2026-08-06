@@ -18,7 +18,7 @@ from ..schemas.tabs import (
     TechnicianRow,
     TechniciensResponse,
 )
-from .shared import IS_OPEN_EXPR, SLA_MET_EXPR, USER_NAME_EXPR, ticket_filters
+from .shared import IS_OPEN_EXPR, SLA_MET_EXPR, ticket_filters, user_name_expr
 
 
 def _criticality(high_ratio: float) -> str:
@@ -38,7 +38,7 @@ async def get_demandeurs(session: AsyncSession, f) -> DemandeursResponse:
         await session.execute(
             text(
                 f"""
-                SELECT t.user_requester AS uid, {USER_NAME_EXPR} AS name,
+                SELECT t.user_requester AS uid, {user_name_expr('t.user_requester')} AS name,
                        COUNT(*) AS total,
                        SUM(CASE WHEN t.type = 1 THEN 1 ELSE 0 END) AS incidents,
                        SUM(CASE WHEN t.type = 2 THEN 1 ELSE 0 END) AS requests,
@@ -134,6 +134,10 @@ async def get_services(session: AsyncSession, f) -> ServicesResponse:
 
 async def get_sites(session: AsyncSession, f) -> SitesResponse:
     frag, params = ticket_filters(f, prefix="t.")
+    # entities_id = 0 is GLPI's "Root entity" — the default parent of every
+    # entity, not a real site — so it's excluded from both the ranking and
+    # the total used for part_pct.
+    frag = f"{frag} AND (t.entities_id IS NULL OR t.entities_id <> 0)"
     grand_total = int(
         (
             await session.execute(
@@ -151,7 +155,8 @@ async def get_sites(session: AsyncSession, f) -> SitesResponse:
             text(
                 f"""
                 SELECT t.entities_id AS eid,
-                       COALESCE(e.name, 'Site #'||t.entities_id::text) AS name,
+                       COALESCE(e.name, 'Site #'||t.entities_id::text,
+                                'Sans site') AS name,
                        COUNT(*) AS total,
                        SUM(CASE WHEN t.is_resolved THEN 1 ELSE 0 END) AS resolved,
                        SUM(CASE WHEN {IS_OPEN_EXPR} THEN 1 ELSE 0 END) AS open,
@@ -227,7 +232,7 @@ async def get_techniciens(session: AsyncSession, f) -> TechniciensResponse:
         await session.execute(
             text(
                 f"""
-                SELECT t.user_assign AS tid, {USER_NAME_EXPR} AS name,
+                SELECT t.user_assign AS tid, {user_name_expr('t.user_assign')} AS name,
                        COUNT(*) AS total,
                        SUM(CASE WHEN t.is_resolved THEN 1 ELSE 0 END) AS resolved,
                        AVG(CASE WHEN {SLA_MET_EXPR} THEN 1.0 ELSE 0.0 END) AS sla_pct,
@@ -273,7 +278,11 @@ async def get_categories(session: AsyncSession, f) -> CategoriesResponse:
             text(
                 f"""
                 SELECT t.itilcategories_id AS cid,
-                       COALESCE(c.name, 'Cat #'||t.itilcategories_id::text) AS name,
+                       -- A ticket with no category yields NULL for the whole
+                       -- concat ('Cat #'||NULL is NULL in SQL), so a trailing
+                       -- literal is required or `name` comes back NULL.
+                       COALESCE(c.name, 'Cat #'||t.itilcategories_id::text,
+                                'Sans catégorie') AS name,
                        COUNT(*) AS total,
                        SUM(CASE WHEN t.is_resolved THEN 1 ELSE 0 END) AS resolved,
                        AVG(t.resolution_days) AS avg_days,

@@ -41,7 +41,35 @@ DATE_COLUMNS = ("date", "date_mod", "solvedate", "closedate", "time_to_resolve")
 RESOLVED_STATUSES = (5, 6)         # GLPI: 5=solved, 6=closed
 HIGH_PRIORITY_LEVELS = (5, 6)      # GLPI: 5=very high, 6=major
 
+# Dropdown-backed columns that GLPI /search renders as display names.
+FK_COLUMNS = (
+    "itilcategories_id", "entities_id", "groups_id_requester",
+    "user_requester", "user_assign",
+)
+
 _PREFIX_RE = re.compile(r"^\s*(?:tr|re|fwd|fw)\s*:\s*", flags=re.IGNORECASE)
+
+
+def flatten_glpi_value(value: Any) -> Any:
+    """Reduce a GLPI /search cell to a single scalar.
+
+    Multi-valued search options (a ticket can have several requesters) come
+    back as a list, and sometimes as ``{"name": ...}`` dicts. Feeding those
+    straight into ``pd.to_numeric`` yields NA, so flatten to the first
+    meaningful scalar and let the caller decide how to interpret it.
+    """
+    if isinstance(value, list):
+        for item in value:
+            flat = flatten_glpi_value(item)
+            if flat not in (None, ""):
+                return flat
+        return None
+    if isinstance(value, dict):
+        for key in ("id", "name", "completename"):
+            if value.get(key) not in (None, ""):
+                return value[key]
+        return None
+    return value
 
 
 def normalize_title(title: Any) -> str:
@@ -83,6 +111,25 @@ class TicketTransformer:
                 df[col] = pd.to_datetime(df[col], errors="coerce", utc=False)
         return df
 
+    def coerce_fk_ids(self, df: pd.DataFrame) -> pd.DataFrame:
+        """GLPI /search returns human-readable names for some dropdown fields
+        (e.g. ``entities_id`` = "Root entity > Usine A"). Coerce every FK-style
+        id column to integer; non-numeric strings become NA so the BIGINT
+        warehouse columns accept them without a datatype mismatch.
+
+        The original display strings are preserved in ``<col>_display`` — the
+        load step resolves those back to real ids against the dimension tables
+        (see ``etl.load.resolve_fk_display_names``). Dropping them here would
+        silently null out every FK, which is what happened before.
+        """
+        for col in FK_COLUMNS:
+            if col not in df.columns:
+                continue
+            flat = df[col].map(flatten_glpi_value)
+            df[f"{col}_display"] = flat.astype("string")
+            df[col] = pd.to_numeric(flat, errors="coerce").astype("Int64")
+        return df
+
     def add_derived(self, df: pd.DataFrame) -> pd.DataFrame:
         if df.empty:
             df["is_resolved"] = pd.Series(dtype="boolean")
@@ -105,6 +152,7 @@ class TicketTransformer:
     def transform(self, rows: Iterable[dict[str, Any]]) -> pd.DataFrame:
         df = self.to_dataframe(rows)
         df = self.parse_dates(df)
+        df = self.coerce_fk_ids(df)
         df = self.add_derived(df)
         logger.info("TicketTransformer: %d rows transformed", len(df))
         return df

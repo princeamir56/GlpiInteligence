@@ -29,6 +29,11 @@ DEFAULT_ARGS = {
     start_date=datetime(2026, 1, 1),
     catchup=False,
     max_active_runs=1,
+    # The four model tasks are individually memory-hungry (Prophet,
+    # sentence-transformers, spaCy, XGBoost) and each reads the full ticket
+    # table. Fanning them out in parallel peaks well past a small Docker VM's
+    # memory and gets them OOM-killed, so run them one at a time.
+    max_active_tasks=1,
     default_args=DEFAULT_ARGS,
     tags=["glpi", "ml", "layer3"],
 )

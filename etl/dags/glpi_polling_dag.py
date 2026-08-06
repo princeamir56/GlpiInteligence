@@ -26,6 +26,19 @@ def _wait_celery(async_result, timeout: int = CELERY_TIMEOUT) -> Any:
     return async_result.get(timeout=timeout, disable_sync_subtasks=False)
 
 
+def _to_day_iso(value: Any) -> str:
+    """Normalize Airflow's execution_date (pendulum DateTime, str, or None)
+    to a plain YYYY-MM-DD string for the daily-KPI upsert."""
+    if value is None:
+        return datetime.utcnow().date().isoformat()
+    if isinstance(value, str):
+        return value[:10]
+    date_attr = getattr(value, "date", None)
+    if callable(date_attr):
+        return date_attr().isoformat()
+    return str(value)[:10]
+
+
 @dag(
     dag_id="glpi_polling",
     description="Poll GLPI every 10 min, transform tickets, upsert to warehouse.",
@@ -99,12 +112,17 @@ def glpi_polling_dag() -> None:
         return result
 
     @task()
-    def load_postgres_task(payload: dict[str, Any], execution_date: str | None = None) -> dict[str, int]:
+    def load_postgres_task(payload: dict[str, Any], execution_date: Any = None) -> dict[str, int]:
         from etl.tasks import load_dimensions_task, load_kpis_task, load_tickets_task
 
-        ticket_rows = _wait_celery(load_tickets_task.delay(payload["records"]))
+        # Dimensions first: the ticket loader resolves GLPI display names
+        # ("Root entity > Usine A") back to ids against these tables, so they
+        # must be present before tickets land.
         dim_counts = _wait_celery(load_dimensions_task.delay(payload["dims"]))
-        day_iso = (execution_date or datetime.utcnow().date().isoformat())[:10]
+        ticket_rows = _wait_celery(load_tickets_task.delay(payload["records"]))
+        # Airflow injects `execution_date` as a pendulum DateTime, not a string,
+        # so slicing it raises TypeError. Accept either form.
+        day_iso = _to_day_iso(execution_date)
         _wait_celery(load_kpis_task.delay(payload["kpis"], day_iso))
 
         result = {"tickets": ticket_rows, **dim_counts, "followups": payload["followup_count"]}

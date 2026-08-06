@@ -241,9 +241,14 @@ class GLPIClient:
             for row in data:
                 yield row
             logger.debug("search(%s): %d-%d / total=%s", itemtype, start, end, total)
-            if total is not None and end + 1 >= total:
+            if total is not None and start + len(data) >= total:
                 break
-            if len(data) < size:
+            # Advance by the actual number of rows returned. GLPI enforces a
+            # global cap (list_limit_max, often 500) that trims the last page
+            # to fewer than `size` rows — trusting `size` here would cause us
+            # to skip the rest of the dataset. Advancing by len(data) keeps
+            # pagination correct even when the server returns partial pages.
+            if len(data) == 0:
                 break
-            start += size
+            start += len(data)
         logger.info("search(%s) complete — totalcount=%s", itemtype, total)

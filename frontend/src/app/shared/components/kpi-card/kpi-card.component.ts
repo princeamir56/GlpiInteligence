@@ -15,6 +15,8 @@ export class KpiCardComponent {
   @Input() label = '';
   @Input() value = 0;
   @Input() unit = '';
+  /** When set, renders in place of the animated numeric value (e.g. a category name). */
+  @Input() text?: string;
   @Input() icon = 'layout-dashboard';
   @Input() decimals = 0;
   @Input() delta?: number;

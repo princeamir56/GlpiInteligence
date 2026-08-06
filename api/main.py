@@ -101,14 +101,6 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_middleware(SlowAPIMiddleware)
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=settings.cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
     # ---- request-id + structured access logging + rate-limit tagging ----
     @app.middleware("http")
     async def context_middleware(request: Request, call_next):
@@ -131,6 +123,19 @@ def create_app() -> FastAPI:
             "request complete", extra={"duration_ms": round(duration, 2)}
         )
         return response
+
+    # CORS is added LAST so it ends up the OUTERMOST middleware (Starlette wraps
+    # in reverse registration order). Registered before `context_middleware`, the
+    # 500 that middleware synthesizes bypasses CORS and reaches the browser with
+    # no Access-Control-Allow-Origin header — the request is then blocked and the
+    # frontend can only report an opaque "0 Unknown Error" instead of the status.
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     # ---- consistent JSON error envelope ----
     @app.exception_handler(StarletteHTTPException)

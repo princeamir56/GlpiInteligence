@@ -41,3 +41,10 @@ RUN pip install --no-cache-dir \
 ENV ML_MODEL_CACHE_DIR=/opt/airflow/.model_cache
 RUN python -c "from sentence_transformers import SentenceTransformer as S; \
 S('paraphrase-multilingual-MiniLM-L12-v2', cache_folder='/opt/airflow/.model_cache')"
+
+# Create the MLflow tracking dir *in the image*, as the airflow user. A named
+# volume mounted over an existing image directory inherits that directory's
+# ownership; if the path is absent, Docker creates it root-owned and every task
+# fails with sqlite3 "unable to open database file" when MLflow tries to create
+# mlruns/mlflow.db (the container runs as uid 50000).
+RUN mkdir -p /opt/airflow/mlruns/artifacts

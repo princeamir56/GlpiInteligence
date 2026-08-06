@@ -10,7 +10,7 @@ from ..schemas.tabs import (
     VolumeForecast,
     VolumeForecastResponse,
 )
-from .shared import USER_NAME_EXPR
+from .shared import user_name_expr
 
 # ml_forecasts is daily; "next 72h" == the next 3 forecast_dates from today.
 VOLUME_HORIZON_DAYS = 3
@@ -31,7 +31,10 @@ async def get_volume_forecast(session: AsyncSession, f) -> VolumeForecastRespons
                 FROM ml_forecasts fc
                 LEFT JOIN dim_categories c ON c.id = fc.category_id
                 WHERE fc.forecast_date >= CURRENT_DATE
-                  AND fc.forecast_date < CURRENT_DATE + (:horizon || ' days')::interval
+                  -- make_interval takes an int directly. Building the interval
+                  -- by concatenation (:horizon || ' days') makes asyncpg infer
+                  -- the parameter as text and reject the int bind.
+                  AND fc.forecast_date < CURRENT_DATE + make_interval(days => :horizon)
                   {cat_clause}
                 ORDER BY fc.category_id, fc.forecast_date
                 """
@@ -59,7 +62,7 @@ async def get_sla_risk(session: AsyncSession, f) -> SlaRiskResponse:
         await session.execute(
             text(
                 f"""
-                SELECT r.technician_id, {USER_NAME_EXPR} AS name,
+                SELECT r.technician_id, {user_name_expr('r.technician_id')} AS name,
                        r.risk_score, r.next_48h_prediction, r.confidence
                 FROM ml_sla_risk r
                 LEFT JOIN dim_users u ON u.id = r.technician_id

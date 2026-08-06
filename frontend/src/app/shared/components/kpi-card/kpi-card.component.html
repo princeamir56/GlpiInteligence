@@ -8,7 +8,10 @@
   </div>
 
   <div class="value mono">
-    <span [countUp]="value" [decimals]="decimals" [suffix]="unit">0{{ unit }}</span>
+    <span *ngIf="text != null; else counted">{{ text }}</span>
+    <ng-template #counted>
+      <span [countUp]="value" [decimals]="decimals" [suffix]="unit">0{{ unit }}</span>
+    </ng-template>
   </div>
   <div class="label">{{ label }}</div>
 </div>

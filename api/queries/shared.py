@@ -20,11 +20,19 @@ SLA_MET_EXPR = (
 )
 IS_OPEN_EXPR = "(is_resolved IS NOT TRUE)"
 
-# Display name for a dim_users row `u`.
-USER_NAME_EXPR = (
-    "COALESCE(NULLIF(TRIM(COALESCE(u.realname,'')||' '||COALESCE(u.firstname,'')), ''), "
-    "u.name, 'user #'||u.id::text)"
-)
+def user_name_expr(id_col: str) -> str:
+    """Display name for a LEFT JOINed dim_users row `u`.
+
+    `id_col` is the *fact-side* id column (e.g. "t.user_assign"). The final
+    fallback must use it rather than `u.id`: when the join misses — a ticket
+    referencing a user absent from dim_users — every `u.*` column is NULL, so
+    a `u.id` fallback yields NULL and trips the non-optional `name` field in
+    the response schema (a 500 on the whole endpoint).
+    """
+    return (
+        "COALESCE(NULLIF(TRIM(COALESCE(u.realname,'')||' '||COALESCE(u.firstname,'')), ''), "
+        f"u.name, 'user #'||{id_col}::text, 'Inconnu')"
+    )
 
 
 def ticket_filters(

@@ -5,6 +5,8 @@ export interface Kpi {
   label: string;
   value: number;
   unit?: string;
+  /** When set, renders as plain text instead of the animated numeric value (e.g. a category name). */
+  text?: string;
   delta?: number; // percentage change vs previous period
   trend?: 'up' | 'down' | 'flat';
 }
